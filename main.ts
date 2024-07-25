@@ -1,19 +1,34 @@
-import { Plugin, Notice, TextFileView } from 'obsidian';
+import { Plugin, Notice, TextFileView, WorkspaceLeaf } from 'obsidian';
 
-export default class SimpleTabLogger extends Plugin {
+export default class RecentTabSwitcher extends Plugin {
     async onload() {
-        console.log('Simple Tab Logger plugin loaded.');
+        console.log('Recent Tab Switcher plugin loaded.');
 
         this.addCommand({
-            id: 'log-active-and-recent-tabs',
-            name: 'Log Active and Recent Tabs',
+            id: 'switch-to-previous-tab',
+            name: 'Switch To Previous Tab',
             hotkeys: [{ modifiers: ["Alt"], key: "q" }],
             callback: () => {
-                const activeLeaf = this.app.workspace.getActiveViewOfType(TextFileView);
                 const recentTabs = this.app.workspace.getLastOpenFiles();
-                console.log('Active Tab:', activeLeaf?.file?.path);
+                const leaves = this.app.workspace.getLeavesOfType("markdown");
+
+                // console.log ("Leaves: ", leaves?.map(leaf => (leaf.view as TextFileView)?.file.path)); // log leaves
+                // console.log("Recent Tabs: ", recentTabs); // log recent tabs
+
+                if (recentTabs.length > 1) { // seems to be always the case...
+                    const previousTabPath = recentTabs[0];
+                    const previousLeaf = leaves.find(leaf => (leaf.view as TextFileView)?.file.path === previousTabPath); // find the leaf with the path
+
+                    if (previousLeaf) { // if the leaf is found
+                        // this.app.workspace.revealLeaf(previousLeaf); // uncomment if you want to highlight the leaf
+                        this.app.workspace.setActiveLeaf(previousLeaf); // Set the leaf as active
+                    } else {
+                        this.app.workspace.openLinkText(previousTabPath, previousTabPath); // open the tab if it's not already open
+                    }
+                } else {
+                    new Notice("No previous tab to switch to.");
+                }
             }
         });
     }
 }
-
