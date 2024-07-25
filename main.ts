@@ -1,12 +1,12 @@
-import { Plugin, Notice, TextFileView, WorkspaceLeaf } from 'obsidian';
+import { Notice, Plugin, TextFileView } from 'obsidian';
 
 export default class RecentTabSwitcher extends Plugin {
     async onload() {
         console.log('Recent Tab Switcher plugin loaded.');
-
+    
         this.addCommand({
-            id: 'switch-to-previous-tab',
-            name: 'Switch To Previous Tab',
+            id: 'toggle-to-recent-tab',
+            name: 'Toggle between current and recent tab',
             hotkeys: [{ modifiers: ["Alt"], key: "q" }],
             callback: () => {
                 const recentTabs = this.app.workspace.getLastOpenFiles();
