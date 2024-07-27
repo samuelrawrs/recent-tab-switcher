@@ -1,34 +1,55 @@
-import { Notice, Plugin, TextFileView } from 'obsidian';
+import { Notice, Plugin, TextFileView, WorkspaceLeaf } from 'obsidian';
 
 export default class RecentTabSwitcher extends Plugin {
+    private previousLeaf: WorkspaceLeaf | null = null;
+    private currentLeaf: WorkspaceLeaf | null = null;
+
     async onload() {
-        console.log('Recent Tab Switcher plugin loaded.');
-    
+        console.log("RecentTabSwitcher Plugin loaded");
+
+        this.registerEvent(
+            this.app.workspace.on('active-leaf-change', () => {
+                // console.log("Active leaf changed");
+                this.updatePreviousLeaf();
+            })
+        );
+
+        // console.log("Event listener for 'active-leaf-change' registered");
+
+        this.updatePreviousLeaf();
+
         this.addCommand({
-            id: 'toggle-to-recent-tab',
-            name: 'Toggle between current and recent tab',
-            hotkeys: [{ modifiers: ["Alt"], key: "q" }],
-            callback: () => {
-                const recentTabs = this.app.workspace.getLastOpenFiles();
-                const leaves = this.app.workspace.getLeavesOfType("markdown");
-
-                // console.log ("Leaves: ", leaves?.map(leaf => (leaf.view as TextFileView)?.file.path)); // log leaves
-                // console.log("Recent Tabs: ", recentTabs); // log recent tabs
-
-                if (recentTabs.length > 1) { // seems to be always the case...
-                    const previousTabPath = recentTabs[0];
-                    const previousLeaf = leaves.find(leaf => (leaf.view as TextFileView)?.file.path === previousTabPath); // find the leaf with the path
-
-                    if (previousLeaf) { // if the leaf is found
-                        // this.app.workspace.revealLeaf(previousLeaf); // uncomment if you want to highlight the leaf
-                        this.app.workspace.setActiveLeaf(previousLeaf); // Set the leaf as active
-                    } else {
-                        this.app.workspace.openLinkText(previousTabPath, previousTabPath); // open the tab if it's not already open
-                    }
-                } else {
-                    new Notice("No previous tab to switch to.");
-                }
-            }
+            id: 'switch-to-previous-leaf',
+            name: 'Switch to Previous Leaf',
+            callback: () => this.switchToPreviousLeaf()
         });
+
+        // console.log("Command for switching to previous leaf registered");
+    }
+
+    private updatePreviousLeaf() {
+        const newLeaf = this.app.workspace.activeLeaf; // couldn't find a suitable 
+        // console.log("Updating Previous Leaf. New Leaf:", newLeaf);
+        if (newLeaf && newLeaf !== this.currentLeaf) {
+            this.previousLeaf = this.currentLeaf;
+            this.currentLeaf = newLeaf;
+            // console.log("Previous Leaf updated to:", this.previousLeaf);
+            // console.log("Current Leaf updated to:", this.currentLeaf);
+        }
+    }
+
+    private switchToPreviousLeaf() {
+        const activeLeaf = this.app.workspace.activeLeaf;
+        // console.log("Active Leaf:", activeLeaf);
+
+        if (activeLeaf) {
+            if (this.previousLeaf && this.previousLeaf !== activeLeaf) {
+                // console.log("Switching to Previous Leaf:", this.previousLeaf);
+                this.app.workspace.setActiveLeaf(this.previousLeaf); // Set the previous leaf as active
+            } else {
+                console.log("No previous tab to switch to.");
+                new Notice("No previous tab to switch to.");
+            }
+        }
     }
 }
